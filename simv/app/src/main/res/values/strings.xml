@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">SIMV</string>
+    <string name="start_run">START RUN</string>
+    <string name="setup_run">SETUP RUN</string>
+    <string name="project_name_label">Project Name</string>
+    <string name="project_name_hint">Enter Project Name...</string>
+    <string name="location_label">Location</string>
+    <string name="location_hint">Location</string>
+    <string name="operator_id_label">Operator ID</string>
+    <string name="operator_id_hint">Operator ID</string>
+    <string name="next">NEXT</string>
+    <string name="camera_view">CAMERA VIEW</string>
+    <string name="take_photo">TAKE PHOTO</string>
+    <string name="photos_taken_format">PHOTOS TAKEN: %1$d / %2$d</string>
+    <string name="stop_run">STOP RUN</string>
+    <string name="run_completed_title">RUN COMPLETED\nSUCCESSFULLY</string>
+    <string name="total_photos_format">Total Photos Captured: %1$d</string>
+    <string name="time_format">Time: %1$s</string>
+    <string name="done">DONE</string>
+    <string name="validation_error">Please fill in all setup fields to continue.</string>
+</resources>
