@@ -17,20 +17,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -50,26 +62,39 @@ fun SetupRunScreen(
     onProjectNameChanged: (String) -> Unit,
     onLocationChanged: (String) -> Unit,
     onOperatorIdChanged: (String) -> Unit,
+    onMaxPhotosChanged: (Int) -> Unit,
     onNextClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
+    // rememberSaveable garante que o campo de texto sobrevive a mudanças de configuração (rotação)
+    var maxPhotosText by rememberSaveable { mutableStateOf(formState.maxPhotos.toString()) }
+
     val fetchLocation = {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
         if (locationManager != null) {
             try {
-                val gpsLoc: Location? = if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                val gpsLoc: Location? = if (ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
                     locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                 } else null
 
-                val netLoc: Location? = if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                val netLoc: Location? = if (ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
                     locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
                 } else null
 
                 val bestLoc: Location? = gpsLoc ?: netLoc
                 if (bestLoc != null) {
-                    val formatted = String.format(java.util.Locale.US, "%.4f, %.4f", bestLoc.latitude, bestLoc.longitude)
+                    val formatted = String.format(
+                        java.util.Locale.US, "%.4f, %.4f",
+                        bestLoc.latitude, bestLoc.longitude
+                    )
                     onLocationChanged(formatted)
                     Toast.makeText(context, "Localização GPS obtida com sucesso!", Toast.LENGTH_SHORT).show()
                 } else {
@@ -90,13 +115,21 @@ fun SetupRunScreen(
         if (granted) {
             fetchLocation()
         } else {
-            Toast.makeText(context, "Permissão de localização é necessária para obter GPS.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "Permissão de localização é necessária para obter GPS.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
     val requestLocationPermission = {
-        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
         if (fineGranted || coarseGranted) {
             fetchLocation()
@@ -117,7 +150,10 @@ fun SetupRunScreen(
             .padding(24.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 96.dp), // reserva espaço para o botão fixo no rodapé
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
@@ -153,12 +189,28 @@ fun SetupRunScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Operator ID Field
+            // Operator ID Field (auto-preenchido via SharedPreferences)
             SimvInputField(
                 label = stringResource(R.string.operator_id_label),
                 placeholder = stringResource(R.string.operator_id_hint),
                 value = formState.operatorId,
                 onValueChange = onOperatorIdChanged
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Max Photos Field (salvo em SharedPreferences)
+            SimvNumberField(
+                label = "Máximo de Fotos",
+                placeholder = "Ex: 20",
+                value = maxPhotosText,
+                onValueChange = { text ->
+                    maxPhotosText = text
+                    val parsed = text.toIntOrNull()
+                    if (parsed != null) {
+                        onMaxPhotosChanged(parsed)
+                    }
+                }
             )
 
             formState.errorMessage?.let { error ->
@@ -215,12 +267,48 @@ private fun SimvInputField(
             value = value,
             onValueChange = onValueChange,
             placeholder = {
-                Text(
-                    text = placeholder,
-                    color = SimvTextSecondary
-                )
+                Text(text = placeholder, color = SimvTextSecondary)
             },
             singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = SimvInputFieldBg,
+                unfocusedContainerColor = SimvInputFieldBg,
+                focusedBorderColor = SimvCyan,
+                unfocusedBorderColor = SimvBorder,
+                focusedTextColor = SimvTextPrimary,
+                unfocusedTextColor = SimvTextPrimary,
+                cursorColor = SimvCyan
+            ),
+            shape = RoundedCornerShape(8.dp)
+        )
+    }
+}
+
+@Composable
+private fun SimvNumberField(
+    label: String,
+    placeholder: String,
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = SimvCyan,
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = {
+                Text(text = placeholder, color = SimvTextSecondary)
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = SimvInputFieldBg,
@@ -261,10 +349,7 @@ private fun SimvLocationInputField(
                 value = value,
                 onValueChange = onValueChange,
                 placeholder = {
-                    Text(
-                        text = placeholder,
-                        color = SimvTextSecondary
-                    )
+                    Text(text = placeholder, color = SimvTextSecondary)
                 },
                 singleLine = true,
                 modifier = Modifier.weight(1f),

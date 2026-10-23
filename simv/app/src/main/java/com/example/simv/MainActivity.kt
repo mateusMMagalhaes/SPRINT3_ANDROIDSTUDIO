@@ -14,13 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.example.simv.navigation.SimvScreen
 import com.example.simv.ui.screens.CameraViewScreen
+import com.example.simv.ui.screens.HistoryScreen
 import com.example.simv.ui.screens.RunCompletedScreen
 import com.example.simv.ui.screens.SetupRunScreen
 import com.example.simv.ui.screens.StartScreen
 import com.example.simv.ui.theme.SimvTheme
 import com.example.simv.ui.viewmodel.RunViewModel
-import com.example.simv.ui.viewmodel.SimvScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -51,6 +52,8 @@ fun SimvMainApp(
     val setupForm by viewModel.setupForm.collectAsState()
     val currentSession by viewModel.currentSession.collectAsState()
     val flashTrigger by viewModel.flashTrigger.collectAsState()
+    val historyState by viewModel.historyState.collectAsState()
+    val saveState by viewModel.saveState.collectAsState()
 
     Crossfade(
         targetState = currentScreen,
@@ -61,18 +64,22 @@ fun SimvMainApp(
         when (screen) {
             SimvScreen.START -> {
                 StartScreen(
-                    onStartRunClicked = viewModel::onStartRunClicked
+                    onStartRunClicked = viewModel::onStartRunClicked,
+                    onHistoryClicked = viewModel::onHistoryClicked
                 )
             }
+
             SimvScreen.SETUP -> {
                 SetupRunScreen(
                     formState = setupForm,
                     onProjectNameChanged = viewModel::onProjectNameChanged,
                     onLocationChanged = viewModel::onLocationChanged,
                     onOperatorIdChanged = viewModel::onOperatorIdChanged,
+                    onMaxPhotosChanged = viewModel::onMaxPhotosChanged,
                     onNextClicked = viewModel::onSetupNextClicked
                 )
             }
+
             SimvScreen.CAMERA_VIEW -> {
                 CameraViewScreen(
                     photosCaptured = currentSession.photosCaptured,
@@ -83,11 +90,23 @@ fun SimvMainApp(
                     onStopRunClicked = viewModel::onStopRunClicked
                 )
             }
+
             SimvScreen.COMPLETED -> {
                 RunCompletedScreen(
                     totalPhotos = currentSession.photosCaptured,
                     formattedTime = viewModel.getFormattedTime(),
+                    saveState = saveState,
                     onDoneClicked = viewModel::onDoneClicked
+                )
+            }
+
+            SimvScreen.HISTORY -> {
+                HistoryScreen(
+                    historyState = historyState,
+                    onBackClicked = viewModel::onBackFromHistoryClicked,
+                    onDeleteSession = viewModel::onDeleteSession,
+                    formatTimestamp = viewModel::formatTimestamp,
+                    formatDuration = { seconds -> viewModel.useCase.formatDuration(seconds) }
                 )
             }
         }

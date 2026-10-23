@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,10 +26,12 @@ import com.example.simv.R
 import com.example.simv.ui.theme.SimvCyan
 import com.example.simv.ui.theme.SimvDarkBg
 import com.example.simv.ui.theme.SimvTextPrimary
+import com.example.simv.ui.theme.SimvTextSecondary
 
 @Composable
 fun StartScreen(
     onStartRunClicked: () -> Unit,
+    onHistoryClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -59,25 +63,49 @@ fun StartScreen(
             )
         }
 
-        Button(
-            onClick = onStartRunClicked,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = BottomButtonMargin)
-                .height(ButtonHeight),
-            shape = RoundedCornerShape(ButtonCornerRadius),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = SimvCyan,
-                contentColor = SimvDarkBg
-            )
+                .padding(bottom = BottomButtonMargin),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(R.string.start_run),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
+            Button(
+                onClick = onStartRunClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ButtonHeight),
+                shape = RoundedCornerShape(ButtonCornerRadius),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SimvCyan,
+                    contentColor = SimvDarkBg
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.start_run),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            OutlinedButton(
+                onClick = onHistoryClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ButtonHeight),
+                shape = RoundedCornerShape(ButtonCornerRadius),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = SimvTextSecondary
+                )
+            ) {
+                Text(
+                    text = "Ver Histórico",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp
+                )
+            }
         }
     }
 }
